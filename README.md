@@ -6,3 +6,4 @@ The sqlll.txt file contains the commands to create the tables, stored procedures
 Download and install Oracle 10g XE.
 Download and install NetBeans.
 Download the sqlll.txt and copy paste the contents into the sql commmand line
+Download the report.docx file for more information
