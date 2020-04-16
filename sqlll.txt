@@ -1,0 +1,108 @@
+create table medicine
+(med_id int primary key,
+name varchar(25),
+composition varchar(25),
+date_man date not null,
+exp_date date not null,
+cost_per_unit int);
+
+create table stores
+(store_id int primary key,
+name varchar(25),
+address varchar(50),
+contact varchar(25),
+store_man varchar(25),
+pass varchar(15)
+);
+
+create table dealer
+(dealer_id int primary key,
+phone varchar(25),
+address varchar(50),
+name varchar(25),
+pass varchar(15)
+);
+
+create table retail
+(med_id int references medicine(med_id) on delete cascade,
+store_id int references stores(store_id) on delete cascade,
+dealer_id int references dealer(dealer_id) on delete cascade,
+rackno int,
+quantity_supplied int,
+batchno int,
+constraint retp primary key(med_id,store_id,dealer_id));
+
+create table trans1
+(bill_id int primary key,
+cust_name varchar(25),
+bill_date date not null,
+gtotal int
+);
+
+create table transactions
+(bill_id int references trans1(bill_id) on delete cascade,
+med_id int references medicine(med_id) on delete cascade,
+quantity int,
+store_id int references stores(store_id) on delete cascade,
+total int,
+constraint trp primary key(bill_id,med_id));
+
+create table dcost
+(med_id int references medicine(med_id) on delete cascade,
+dealer_id int references dealer(dealer_id) on delete cascade,
+cost int,
+constraint dcostp primary key(med_id,dealer_id));
+
+create table messages
+(store_id int references stores(store_id) on delete cascade,
+med_id int references medicine(med_id) on delete cascade,
+dealer_id int references dealer(dealer_id) on delete cascade,
+quantity int,
+constraint messp primary key(store_id,med_id)
+);
+
+create table quant
+(med_id int references medicine(med_id) on delete cascade,
+store_id int references stores(store_id) on delete cascade,
+quantity int,
+constraint quantp primary key(med_id,store_id)
+);
+
+create or replace procedure "DODD" (din IN DATE, mid IN NUMBER, md OUT NUMBER, nam OUT VARCHAR2, comp OUT VARCHAR2, dman OUT DATE, dexp OUT DATE, ccc OUT NUMBER) is begin select med_id,name,composition,date_man,exp_date,cost_per_unit into md,nam,comp,dman,dexp,ccc from medicine where med_id=mid and exp_date between din and din+5; end;
+/
+
+CREATE OR REPLACE TRIGGER  "TRANSACTIONS_T1" 
+AFTER
+insert on "TRANSACTIONS"
+for each row
+begin
+update quant set quantity=quantity- :NEW.quantity where med_id=:NEW.med_id and store_id=:NEW.store_id;
+end;
+/
+ALTER TRIGGER  "TRANSACTIONS_T1" ENABLE
+/
+
+
+CREATE OR REPLACE TRIGGER  "RETAIL_T22" 
+AFTER
+insert on "RETAIL"
+for each row
+begin
+delete from messages where med_id=:NEW.med_id and store_id=:NEW.store_id and dealer_id=:NEW.dealer_id;
+end;
+/
+ALTER TRIGGER  "RETAIL_T22" ENABLE
+/
+
+CREATE OR REPLACE TRIGGER  "RETAIL_T1" 
+AFTER
+insert on "RETAIL"
+for each row
+begin
+update quant set quantity=quantity+:NEW.quantity_supplied where med_id=:NEW.med_id and store_id=:NEW.store_id;
+end;
+/
+ALTER TRIGGER  "RETAIL_T1" ENABLE
+/
+
+
